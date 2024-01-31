@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+import toast from 'react-hot-toast'
+import { useNavigate } from 'react-router-dom'
 
 export default function Signup() {
     const [credentials, setcredentials] = useState({ name: "", email: "", password: "", confirmPassword:""})
-
+    const navigate = useNavigate();
     const handleSubmit = async (e) => {
         e.preventDefault();
         const response = await fetch("http://localhost:4000/api/v1/signup", {
@@ -11,12 +13,12 @@ export default function Signup() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ name: credentials.name, email: credentials.email, password: credentials.password,
-            confirmPassword: credentials.confirmPassword})
-
+            body: JSON.stringify({ name: credentials.name, email: credentials.email, password: credentials.password})
         });
         const json = await response.json();
         console.log(json);
+        toast.success("Successfully Created User, Login to check the dashboard Page");
+        navigate("/login");
         if (!json.success) {
             alert("Enter Valid Credentials ")
         }
@@ -46,10 +48,10 @@ const onchange=(event)=>{
                         <label htmlFor="exampleInputPassword1" className="form-label">Password</label>
                         <input type="password" className="form-control" id="exampleInputPassword1" name='password' value={credentials.password} onChange={onchange}/>
                     </div>
-                    <div className="mb-3">
+                    {/* <div className="mb-3">
                         <label htmlFor="exampleInputPassword2" className="form-label">Confirm Password</label>
                         <input type="password" className="form-control" id="exampleInputPassword1" name='confirmPassword' value={credentials.confirmPassword} onChange={onchange}/>
-                    </div>
+                    </div> */}
                  
                     <button type="submit" className="m-3 btn btn-primary">Submit</button>
                     <Link to="/login" className='m-3 btn btn-danger'>Already a User</Link>

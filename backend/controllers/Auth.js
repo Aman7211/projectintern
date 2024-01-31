@@ -73,7 +73,7 @@ exports.login = async (req, res) => {
 		}
 
 		// Find user with provided email
-		const user = await User.findOne({ email });
+		const user = await User.findOne({ email }).maxTimeMS(5000);
 
 		// If user not found with provided email
 		if (!user) {
@@ -87,7 +87,7 @@ exports.login = async (req, res) => {
 		// Generate JWT token and Compare Password
 		if (await bcrypt.compare(password, user.password)) {
 			const token = jwt.sign(
-				{ email: user.email, id: user._id, accountType: user.accountType },
+				{ email: user.email, name: user.name,},
 				process.env.JWT_SECRET,
 				{
 					expiresIn: "24h",
@@ -95,14 +95,10 @@ exports.login = async (req, res) => {
 			);
 
 			// Save token to user document in database
-			user.token = token;
+	
 			user.password = undefined;
-			// Set cookie for token and return success response
-			const options = {
-				expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-				httpOnly: true,
-			};
-			res.cookie("token", token, options).status(200).json({
+		
+			res.status(200).json({
 				success: true,
 				token,
 				user,
@@ -120,9 +116,47 @@ exports.login = async (req, res) => {
 		return res.status(500).json({
 			success: false,
 			message: `Login Failure Please Try Again`,
+			error: error.message,
 		});
 	}
 };
 
+exports.getuser = async (req, res) => {
+  try {
+    // Fetch the 'email' header value from the request
+    const email = req.params.email;
+    console.log(email);
+    // Check if email is provided in the header
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email not provided in the request header",
+      });
+    }
 
+    // Fetch user data from the User collection using findOne
+    const userData = await User.findOne({ email });
 
+    // Check if the user was found
+    if (!userData) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Respond with the fetched user data
+    res.status(200).json({
+      success: true,
+      userData,
+      message: "User data is fetched",
+    });
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).json({
+      success: false,
+      data: "Internal server error",
+      message: error.message,
+    });
+  }
+};
